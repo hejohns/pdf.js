@@ -215,6 +215,7 @@ See https://github.com/adobe-type-tools/cmap-resources
                   <span id="numPages" class="toolbarLabel"></span>
                 </div>
               </div>
+              <div>For personal use by hejohns</div>
               <div id="toolbarViewerMiddle" class="toolbarHorizontalGroup">
                 <div class="toolbarHorizontalGroup">
                   <button id="zoomOutButton" class="toolbarButton" type="button" tabindex="0" data-l10n-id="pdfjs-zoom-out-button">
@@ -243,6 +244,7 @@ See https://github.com/adobe-type-tools/cmap-resources
                   </select>
                 </span>
               </div>
+              <div>Encrypted to prevent public access</div>
               <div id="toolbarViewerRight" class="toolbarHorizontalGroup">
                 <div id="editorModeButtons" class="toolbarHorizontalGroup" role="radiogroup">
                   <div id="editorSignature" class="toolbarButtonWithContainer" hidden="true">
@@ -839,3 +841,12 @@ See https://github.com/adobe-type-tools/cmap-resources
     <div id="printContainer"></div>
   </body>
 </html>
+<script>
+  document.addEventListener("webviewerloaded", function() {
+    PDFViewerApplication.initializedPromise.then(function() {
+      // Do not use the default view default pdf-- just leave it blank so
+      // we can `PDFViewerApplication.open` later
+      PDFViewerApplicationOptions.set("defaultUrl", "");
+    })
+  });
+</script>

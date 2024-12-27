@@ -45,13 +45,10 @@
   --toolbar-icon-bg-color: light-dark(rgb(0 0 0), rgb(255 255 255));
   --toolbar-icon-hover-bg-color: light-dark(rgb(0 0 0), rgb(255 255 255));
 
-  --sidebar-narrow-bg-color: light-dark(
-    rgb(212 212 215 / 0.9),
-    rgb(42 42 46 / 0.9)
-  );
-  --sidebar-toolbar-bg-color: light-dark(rgb(245 246 247), rgb(50 50 52));
-  --toolbar-bg-color: light-dark(rgb(249 249 250), rgb(56 56 61));
-  --toolbar-border-color: light-dark(rgb(184 184 184), rgb(12 12 13));
+  --sidebar-narrow-bg-color: rgb(212 212 215 / 0.9);
+  --sidebar-toolbar-bg-color: rgb(245 146 247);
+  --toolbar-bg-color: rgb(249 149 250);
+  --toolbar-border-color: rgb(184 184 184);
   --toolbar-box-shadow: 0 1px 0 var(--toolbar-border-color);
   --toolbar-border-bottom: none;
   --toolbarSidebar-box-shadow:
