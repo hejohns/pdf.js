@@ -91,6 +91,17 @@ export default [
       "import/no-empty-named-blocks": "error",
       "import/no-commonjs": "error",
       "import/no-mutable-exports": "error",
+      "import/no-restricted-paths": [
+        "error",
+        {
+          zones: [
+            {
+              target: "./web",
+              from: "./src",
+            },
+          ],
+        },
+      ],
       "import/no-self-import": "error",
       "import/no-unresolved": [
         "error",
@@ -350,15 +361,6 @@ export default [
       "jasmine/no-suite-dupes": ["error", "branch"],
       "jasmine/prefer-jasmine-matcher": "off",
       "jasmine/prefer-toHaveBeenCalledWith": "off",
-    },
-  },
-  {
-    files: jsFiles("test/fuzz"),
-    rules: {
-      "import/no-unresolved": [
-        "error",
-        { ignore: [".*/build/image_decoders/.*"] },
-      ],
     },
   },
   {

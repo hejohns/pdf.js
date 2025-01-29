@@ -5256,6 +5256,13 @@
     "type": "eq"
   },
   {
+    "id": "issue14200",
+    "file": "pdfs/issue14200.pdf",
+    "md5": "4dba2cde1c6e65abe53e66eefc97a7f1",
+    "rounds": 1,
+    "type": "eq"
+  },
+  {
     "id": "jbig2_huffman_1",
     "file": "pdfs/jbig2_huffman_1.pdf",
     "md5": "93ccd85c5686bea27d3e6c3b41921b21",
@@ -6356,6 +6363,21 @@
     "rounds": 1,
     "type": "eq",
     "about": "Fixes one part of bug 1731483."
+  },
+  {
+    "id": "issue19326",
+    "file": "pdfs/issue19326.pdf",
+    "md5": "b4d937017daf439a6318501428e0c6ba",
+    "rounds": 1,
+    "type": "eq"
+  },
+  {
+    "id": "issue19326_main_thread_fetch",
+    "file": "pdfs/issue19326.pdf",
+    "md5": "b4d937017daf439a6318501428e0c6ba",
+    "rounds": 1,
+    "type": "eq",
+    "useWorkerFetch": false
   },
   {
     "id": "bug1140761",
@@ -8976,6 +8998,13 @@
     "type": "other"
   },
   {
+    "id": "bug1942064",
+    "file": "pdfs/bug1942064.pdf",
+    "md5": "d50b5ebb8cab1211609d16faa54ec47d",
+    "rounds": 1,
+    "type": "eq"
+  },
+  {
     "id": "issue16221-text",
     "file": "pdfs/issue16221.pdf",
     "md5": "62d93c9b3aa4ba3af5446504632e78a5",
@@ -10069,6 +10098,13 @@
     "md5": "ac9a14a75457468bde78204ca75701d6",
     "rounds": 1,
     "annotations": true,
+    "type": "eq"
+  },
+  {
+    "id": "issue18816",
+    "file": "pdfs/issue18816.pdf",
+    "md5": "45f863f5b227f700ffea1210e4f80403",
+    "rounds": 1,
     "type": "eq"
   },
   {
@@ -11231,6 +11267,31 @@
     "rounds": 1,
     "link": true,
     "disableFontFace": true,
+    "type": "eq"
+  },
+  {
+    "id": "issue19281",
+    "file": "pdfs/issue19281.pdf",
+    "md5": "c5db558965e4189cc6db2720cdaa3e55",
+    "rounds": 1,
+    "link": true,
+    "type": "other"
+  },
+  {
+    "id": "issue19319",
+    "file": "pdfs/issue19319.pdf",
+    "md5": "8612d3f0cf2dd067ea4aec9c8bf98763",
+    "rounds": 1,
+    "link": true,
+    "firstPage": 2,
+    "lastPage": 2,
+    "type": "eq"
+  },
+  {
+    "id": "issue19360",
+    "file": "pdfs/issue19360.pdf",
+    "md5": "b2de376f7e96fa2b6afc00dac016c40a",
+    "rounds": 1,
     "type": "eq"
   }
 ]
