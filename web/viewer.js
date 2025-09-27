@@ -45,6 +45,10 @@ function getViewerConfiguration() {
       zoomIn: document.getElementById("zoomInButton"),
       zoomOut: document.getElementById("zoomOutButton"),
       print: document.getElementById("printButton"),
+      editorCommentButton: document.getElementById("editorCommentButton"),
+      editorCommentParamsToolbar: document.getElementById(
+        "editorCommentParamsToolbar"
+      ),
       editorFreeTextButton: document.getElementById("editorFreeTextButton"),
       editorFreeTextParamsToolbar: document.getElementById(
         "editorFreeTextParamsToolbar"
@@ -241,6 +245,22 @@ function getViewerConfiguration() {
       updateButton: document.getElementById("editSignatureUpdateButton"),
     },
     annotationEditorParams: {
+      editorCommentsSidebar: document.getElementById("editorCommentsSidebar"),
+      editorCommentsSidebarCount: document.getElementById(
+        "editorCommentsSidebarCount"
+      ),
+      editorCommentsSidebarTitle: document.getElementById(
+        "editorCommentsSidebarTitle"
+      ),
+      editorCommentsSidebarCloseButton: document.getElementById(
+        "editorCommentsSidebarCloseButton"
+      ),
+      editorCommentsSidebarList: document.getElementById(
+        "editorCommentsSidebarList"
+      ),
+      editorCommentsSidebarResizer: document.getElementById(
+        "editorCommentsSidebarResizer"
+      ),
       editorFreeTextFontSize: document.getElementById("editorFreeTextFontSize"),
       editorFreeTextColor: document.getElementById("editorFreeTextColor"),
       editorInkColor: document.getElementById("editorInkColor"),
@@ -265,13 +285,8 @@ function getViewerConfiguration() {
     editCommentDialog: {
       dialog: document.getElementById("commentManagerDialog"),
       toolbar: document.getElementById("commentManagerToolbar"),
-      actions: document.getElementById("commentActionsButton"),
-      menu: document.getElementById("commentActionsMenu"),
-      editMenuItem: document.getElementById("commentActionsEditButton"),
-      deleteMenuItem: document.getElementById("commentActionsDeleteButton"),
-      closeButton: document.getElementById("commentCloseButton"),
+      title: document.getElementById("commentManagerTitle"),
       textInput: document.getElementById("commentManagerTextInput"),
-      textView: document.getElementById("commentManagerTextView"),
       cancelButton: document.getElementById("commentManagerCancelButton"),
       saveButton: document.getElementById("commentManagerSaveButton"),
     },

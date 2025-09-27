@@ -585,6 +585,8 @@ class AnnotationEditorUIManager {
 
   #activeEditor = null;
 
+  #allEditableAnnotations = null;
+
   #allEditors = new Map();
 
   #allLayers = new Map();
@@ -662,6 +664,8 @@ class AnnotationEditorUIManager {
   #pageColors = null;
 
   #showAllStates = null;
+
+  #pdfDocument = null;
 
   #previousStates = {
     isEditing: false,
@@ -846,6 +850,7 @@ class AnnotationEditorUIManager {
     this.#altTextManager = altTextManager;
     this.#commentManager = commentManager;
     this.#signatureManager = signatureManager;
+    this.#pdfDocument = pdfDocument;
     this._eventBus = eventBus;
     eventBus._on("editingaction", this.onEditingAction.bind(this), { signal });
     eventBus._on("pagechanging", this.onPageChanging.bind(this), { signal });
@@ -891,6 +896,7 @@ class AnnotationEditorUIManager {
     this.isShiftKeyDown = false;
     this._editorUndoBar = editorUndoBar || null;
     this._supportsPinchToZoom = supportsPinchToZoom !== false;
+    commentManager?.setSidebarUiManager(this);
 
     if (typeof PDFJSDev !== "undefined" && PDFJSDev.test("TESTING")) {
       Object.defineProperty(this, "reset", {
@@ -928,6 +934,7 @@ class AnnotationEditorUIManager {
     this.#floatingToolbar = null;
     this.#mainHighlightColorPicker?.destroy();
     this.#mainHighlightColorPicker = null;
+    this.#allEditableAnnotations = null;
     if (this.#focusMainContainerTimeoutId) {
       clearTimeout(this.#focusMainContainerTimeoutId);
       this.#focusMainContainerTimeoutId = null;
@@ -937,6 +944,7 @@ class AnnotationEditorUIManager {
       this.#translationTimeoutId = null;
     }
     this._editorUndoBar?.destroy();
+    this.#pdfDocument = null;
   }
 
   combinedSignal(ac) {
@@ -1060,8 +1068,55 @@ class AnnotationEditorUIManager {
     return !!this.#commentManager;
   }
 
-  editComment(editor, position) {
-    this.#commentManager?.open(this, editor, position);
+  editComment(editor, posX, posY, options) {
+    this.#commentManager?.showDialog(this, editor, posX, posY, options);
+  }
+
+  selectComment(pageIndex, uid) {
+    const layer = this.#allLayers.get(pageIndex);
+    const editor = layer?.getEditorByUID(uid);
+    editor?.toggleComment(/* isSelected */ true, /* visibility */ true);
+  }
+
+  updateComment(editor) {
+    this.#commentManager?.updateComment(editor.getData());
+  }
+
+  updatePopupColor(editor) {
+    this.#commentManager?.updatePopupColor(editor);
+  }
+
+  removeComment(editor) {
+    this.#commentManager?.removeComments([editor.uid]);
+  }
+
+  toggleComment(editor, isSelected, visibility = undefined) {
+    this.#commentManager?.toggleCommentPopup(editor, isSelected, visibility);
+  }
+
+  makeCommentColor(color, opacity) {
+    return (
+      (color && this.#commentManager?.makeCommentColor(color, opacity)) || null
+    );
+  }
+
+  getCommentDialogElement() {
+    return this.#commentManager?.dialogElement || null;
+  }
+
+  async waitForEditorsRendered(pageNumber) {
+    if (this.#allLayers.has(pageNumber - 1)) {
+      return;
+    }
+    const { resolve, promise } = Promise.withResolvers();
+    const onEditorsRendered = evt => {
+      if (evt.pageNumber === pageNumber) {
+        this._eventBus._off("editorsrendered", onEditorsRendered);
+        resolve();
+      }
+    };
+    this._eventBus.on("editorsrendered", onEditorsRendered);
+    await promise;
   }
 
   getSignature(editor) {
@@ -1231,6 +1286,26 @@ class AnnotationEditorUIManager {
     }
     this.#floatingToolbar ||= new FloatingToolbar(this);
     this.#floatingToolbar.show(textLayer, boxes, this.direction === "ltr");
+  }
+
+  /**
+   * Some annotations may have been modified in the annotation layer
+   * (e.g. comments added or modified).
+   * So this function retrieves the data from the storage and removes
+   * them from the storage in order to be able to save them later.
+   * @param {string} annotationId
+   * @returns {Object|null} The data associated to the annotation or null.
+   */
+  getAndRemoveDataFromAnnotationStorage(annotationId) {
+    if (!this.#annotationStorage) {
+      return null;
+    }
+    const key = `${AnnotationEditorPrefix}${annotationId}`;
+    const storedValue = this.#annotationStorage.getRawValue(key);
+    if (storedValue) {
+      this.#annotationStorage.remove(key);
+    }
+    return storedValue;
   }
 
   /**
@@ -1790,25 +1865,73 @@ class AnnotationEditorUIManager {
     this.#updateModeCapability = Promise.withResolvers();
     this.#currentDrawingSession?.commitOrRemove();
 
+    if (this.#mode === AnnotationEditorType.POPUP) {
+      this.#commentManager?.hideSidebar();
+    }
+    this.#commentManager?.destroyPopup();
+
     this.#mode = mode;
     if (mode === AnnotationEditorType.NONE) {
       this.setEditingState(false);
       this.#disableAll();
+      for (const editor of this.#allEditors.values()) {
+        editor.hideStandaloneCommentButton();
+      }
 
       this._editorUndoBar?.hide();
+      this.toggleComment(/* editor = */ null);
 
       this.#updateModeCapability.resolve();
       return;
     }
+
+    for (const editor of this.#allEditors.values()) {
+      editor.addStandaloneCommentButton();
+    }
+
     if (mode === AnnotationEditorType.SIGNATURE) {
       await this.#signatureManager?.loadSignatures();
     }
+
     this.setEditingState(true);
     await this.#enableAll();
     this.unselectAll();
     for (const layer of this.#allLayers.values()) {
       layer.updateMode(mode);
     }
+
+    if (mode === AnnotationEditorType.POPUP) {
+      this.#allEditableAnnotations ||=
+        await this.#pdfDocument.getAnnotationsByType(
+          new Set(this.#editorTypes.map(editorClass => editorClass._editorType))
+        );
+      const elementIds = new Set();
+      const allComments = [];
+      for (const editor of this.#allEditors.values()) {
+        const { annotationElementId, hasComment, deleted } = editor;
+        if (annotationElementId) {
+          elementIds.add(annotationElementId);
+        }
+        if (hasComment && !deleted) {
+          allComments.push(editor.getData());
+        }
+      }
+      for (const annotation of this.#allEditableAnnotations) {
+        const { id, popupRef, contentsObj } = annotation;
+        if (
+          popupRef &&
+          contentsObj?.str &&
+          !elementIds.has(id) &&
+          !this.#deletedAnnotationsElementIds.has(id)
+        ) {
+          // The annotation exists in the PDF and has a comment but there
+          // is no editor for it (anymore).
+          allComments.push(annotation);
+        }
+      }
+      this.#commentManager?.showSidebar(allComments);
+    }
+
     if (!editId) {
       if (isFromKeyboard) {
         this.addNewEditorFromKeyboard();
@@ -1819,12 +1942,14 @@ class AnnotationEditorUIManager {
     }
 
     for (const editor of this.#allEditors.values()) {
-      if (editor.annotationElementId === editId || editor.id === editId) {
+      if (editor.uid === editId) {
         this.setSelected(editor);
         if (editComment) {
           editor.editComment();
         } else if (mustEnterInEditMode) {
           editor.enterInEditMode();
+        } else {
+          editor.focus();
         }
       } else {
         editor.unselect();
@@ -1964,16 +2089,14 @@ class AnnotationEditorUIManager {
   /**
    * Get all the editors belonging to a given page.
    * @param {number} pageIndex
-   * @returns {Array<AnnotationEditor>}
+   * @yields {AnnotationEditor}
    */
-  getEditors(pageIndex) {
-    const editors = [];
+  *getEditors(pageIndex) {
     for (const editor of this.#allEditors.values()) {
       if (editor.pageIndex === pageIndex) {
-        editors.push(editor);
+        yield editor;
       }
     }
-    return editors;
   }
 
   /**

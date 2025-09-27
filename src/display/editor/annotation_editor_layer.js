@@ -193,11 +193,16 @@ class AnnotationEditorLayer {
 
     this.toggleAnnotationLayerPointerEvents(false);
     const { classList } = this.div;
-    for (const editorType of AnnotationEditorLayer.#editorTypes.values()) {
-      classList.toggle(
-        `${editorType._type}Editing`,
-        mode === editorType._editorType
-      );
+    if (mode === AnnotationEditorType.POPUP) {
+      classList.toggle("commentEditing", true);
+    } else {
+      classList.toggle("commentEditing", false);
+      for (const editorType of AnnotationEditorLayer.#editorTypes.values()) {
+        classList.toggle(
+          `${editorType._type}Editing`,
+          mode === editorType._editorType
+        );
+      }
     }
     this.div.hidden = false;
   }
@@ -238,6 +243,12 @@ class AnnotationEditorLayer {
     this.#annotationLayer?.div.classList.toggle("disabled", !enabled);
   }
 
+  get #allEditorsIterator() {
+    return this.#editors.size !== 0
+      ? this.#editors.values()
+      : this.#uiManager.getEditors(this.pageIndex);
+  }
+
   /**
    * Enable pointer events on the main div in order to enable
    * editor creation.
@@ -249,7 +260,7 @@ class AnnotationEditorLayer {
     this.#textLayerDblClickAC?.abort();
     this.#textLayerDblClickAC = null;
     const annotationElementIds = new Set();
-    for (const editor of this.#editors.values()) {
+    for (const editor of this.#allEditorsIterator) {
       editor.enableEditing();
       editor.show(true);
       if (editor.annotationElementId) {
@@ -281,6 +292,10 @@ class AnnotationEditorLayer {
       editor.enableEditing();
     }
     this.#isEnabling = false;
+    this.#uiManager._eventBus.dispatch("editorsrendered", {
+      source: this,
+      pageNumber: this.pageIndex + 1,
+    });
   }
 
   /**
@@ -330,7 +345,7 @@ class AnnotationEditorLayer {
           if (editor?.annotationElementId === null) {
             e.stopPropagation();
             e.preventDefault();
-            editor.dblclick();
+            editor.dblclick(e);
           }
         },
         { signal, capture: true }
@@ -338,7 +353,7 @@ class AnnotationEditorLayer {
     }
     const changedAnnotations = new Map();
     const resetAnnotations = new Map();
-    for (const editor of this.#editors.values()) {
+    for (const editor of this.#allEditorsIterator) {
       editor.disableEditing();
       if (!editor.annotationElementId) {
         continue;
@@ -643,6 +658,15 @@ class AnnotationEditorLayer {
     this.addCommands({ cmd, undo, mustExec: false });
   }
 
+  getEditorByUID(uid) {
+    for (const editor of this.#editors.values()) {
+      if (editor.uid === uid) {
+        return editor;
+      }
+    }
+    return null;
+  }
+
   /**
    * Get an id for an editor.
    * @returns {string}
@@ -736,8 +760,12 @@ class AnnotationEditorLayer {
     return editor;
   }
 
+  get boundingClientRect() {
+    return this.div.getBoundingClientRect();
+  }
+
   #getCenterPoint() {
-    const { x, y, width, height } = this.div.getBoundingClientRect();
+    const { x, y, width, height } = this.boundingClientRect;
     const tlX = Math.max(0, x);
     const tlY = Math.max(0, y);
     const brX = Math.min(window.innerWidth, x + width);
