@@ -15,13 +15,8 @@
 
 import { BasePDFPageView } from "./base_pdf_page_view.js";
 import { OutputScale } from "pdfjs-lib";
-import { RenderingStates } from "./ui_utils.js";
+import { RenderingStates } from "./renderable_view.js";
 
-/** @typedef {import("./interfaces").IRenderableView} IRenderableView */
-
-/**
- * @implements {IRenderableView}
- */
 class PDFPageDetailView extends BasePDFPageView {
   #detailArea = null;
 
@@ -54,9 +49,9 @@ class PDFPageDetailView extends BasePDFPageView {
     return super.renderingState;
   }
 
-  set renderingState(value) {
+  set renderingState(state) {
     this.renderingCancelled = false;
-    super.renderingState = value;
+    super.renderingState = state;
   }
 
   reset({ keepCanvas = false } = {}) {
@@ -267,7 +262,10 @@ class PDFPageDetailView extends BasePDFPageView {
         canvasWrapper.prepend(newCanvas);
       }
     }, hideUntilComplete);
-    canvas.setAttribute("aria-hidden", "true");
+    canvas.ariaHidden = true;
+    if (this.enableOptimizedPartialRendering) {
+      canvas.className = "detailView";
+    }
 
     const { width, height } = viewport;
 
@@ -299,6 +297,7 @@ class PDFPageDetailView extends BasePDFPageView {
         this.canvas = prevCanvas;
       },
       () => {
+        this.pageView._refreshAnnotationLayer();
         this.dispatchPageRendered(
           /* cssTransform */ false,
           /* isDetailView */ true
